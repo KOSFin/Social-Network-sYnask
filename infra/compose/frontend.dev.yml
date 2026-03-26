@@ -1,0 +1,24 @@
+name: synask-frontend-dev
+
+services:
+  quality-gate:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ../..:/app
+    env_file:
+      - ../../.env.dev
+    command: ["sh", "-c", "node ./scripts/deploy-preflight.mjs"]
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.dev
+    env_file:
+      - ../../.env.dev
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      quality-gate:
+        condition: service_completed_successfully
+    restart: unless-stopped

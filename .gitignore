@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env*.example
+
+# Test and coverage artifacts
+coverage
+.nyc_output
+playwright-report
+test-results
+
+# Build and tool caches
+.cache
+.vite
+.eslintcache
+
+# Package manager local files
+.npmrc
+.pnpm-store
+
+# Optional local compose overrides
+docker-compose.override.yml
+infra/compose/*.local.yml
+infra/compose/*.override.yml
+
+# OS temp files
+Thumbs.db
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

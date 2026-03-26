@@ -1,0 +1,67 @@
+name: frontend-release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse version from commit message
+        id: parse
+        shell: bash
+        run: |
+          set -euo pipefail
+          msg="${{ github.event.head_commit.message }}"
+          echo "Commit message: $msg"
+
+          version=""
+
+          if [[ "$msg" =~ release:[[:space:]]*v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            version="v${BASH_REMATCH[1]}"
+          elif [[ "$msg" =~ version:[[:space:]]*v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            version="v${BASH_REMATCH[1]}"
+          elif [[ "$msg" =~ \[release[[:space:]]+v?([0-9]+\.[0-9]+\.[0-9]+)\] ]]; then
+            version="v${BASH_REMATCH[1]}"
+          fi
+
+          if [[ -z "$version" ]]; then
+            echo "No release version marker found. Skipping release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --tags
+          if git rev-parse "$version" >/dev/null 2>&1; then
+            echo "Tag $version already exists. Skipping release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        if: steps.parse.outputs.should_release == 'true'
+        run: |
+          git tag "${{ steps.parse.outputs.version }}" "${{ github.sha }}"
+          git push origin "${{ steps.parse.outputs.version }}"
+
+      - name: Create GitHub release
+        if: steps.parse.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.parse.outputs.version }}
+          name: Frontend ${{ steps.parse.outputs.version }}
+          generate_release_notes: true
